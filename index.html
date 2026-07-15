@@ -31,29 +31,6 @@
   button{font-family:inherit;}
   img{-webkit-user-drag:none; user-select:none;}
 
-  /* ================= LOADING SCREEN ================= */
-  #loading{
-    position:fixed; inset:0; z-index:200;
-    background:var(--paper);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:28px;
-  }
-  #loading .title{font-size:16px; letter-spacing:3px;}
-  #loading .bar-track{ width:360px; height:26px; border:3px solid var(--ink); background:#fff; padding:3px; }
-  #loading .bar-fill{ height:100%; width:0%; background:#3cb954; transition:width 0.05s linear; }
-  #loading .pct{font-size:13px; color:var(--ink-soft);}
-  #loading .avatar{
-    width:110px;height:110px; border-radius:50%; background:#c9c6bd;
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-    opacity:0; transform:scale(0.8);
-    transition:opacity 0.4s ease, transform 0.4s ease; position:relative;
-  }
-  #loading .avatar.show{opacity:1; transform:scale(1);}
-  #loading .avatar svg{width:38px;height:38px; margin-left:4px;}
-  #loading .enter-label{font-size:11px; color:var(--ink-soft); opacity:0; transition:opacity 0.4s ease;}
-  #loading .enter-label.show{opacity:1;}
-  #loading.hide{opacity:0; pointer-events:none; transition:opacity 0.5s ease;}
-
   /* ================= PAGE WRAP ================= */
   .page{
     display:flex; flex-direction:column; align-items:center;
@@ -64,8 +41,8 @@
   /* ================= WORLD FRAME (the "window") ================= */
   #world{
     position:relative;
-    width:min(1500px, 97vw);
-    height:min(860px, 88vh);
+    width:min(1180px, 92vw);
+    height:min(680px, 80vh);
     border:3px solid var(--ink);
     background:var(--panel);
     box-shadow:12px 12px 0 var(--ink);
@@ -218,17 +195,6 @@
 </style>
 </head>
 <body>
-
-<!-- ================= LOADING SCREEN ================= -->
-<div id="loading">
-  <div class="title pixel">LOADING</div>
-  <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
-  <div class="pct pixel" id="pctLabel">0%</div>
-  <div class="avatar" id="avatarBtn">
-    <svg viewBox="0 0 24 24" fill="#141414"><path d="M8 5v14l11-7z"/></svg>
-  </div>
-  <div class="enter-label pixel" id="enterLabel">click to enter</div>
-</div>
 
 <div class="page">
   <div id="world">
@@ -395,23 +361,6 @@
   renderStack();
   document.getElementById('prevCard').addEventListener('click', ()=>{ cardIndex=(cardIndex-1+PROJECTS.length)%PROJECTS.length; renderStack(); });
   document.getElementById('nextCard').addEventListener('click', ()=>{ cardIndex=(cardIndex+1)%PROJECTS.length; renderStack(); });
-
-  /* ============ LOADING SCREEN ============ */
-  const barFill = document.getElementById('barFill');
-  const pctLabel = document.getElementById('pctLabel');
-  const avatarBtn = document.getElementById('avatarBtn');
-  const enterLabel = document.getElementById('enterLabel');
-  const loadingScreen = document.getElementById('loading');
-  let pct = 0;
-  const loadInterval = setInterval(()=>{
-    pct += Math.floor(Math.random()*9)+4;
-    if(pct >= 100){ pct=100; clearInterval(loadInterval); avatarBtn.classList.add('show'); enterLabel.classList.add('show'); }
-    barFill.style.width = pct+'%'; pctLabel.textContent = pct+'%';
-  }, 120);
-  avatarBtn.addEventListener('click', ()=>{
-    loadingScreen.classList.add('hide');
-    setTimeout(()=> loadingScreen.style.display='none', 550);
-  });
 
   /* ============ SCREEN ROUTER (real "pages", no modal backdrop) ============ */
   const screens = document.querySelectorAll('.screen');
