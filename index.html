@@ -12,373 +12,478 @@
     --dot:#dcdad2;
     --ink:#141414;
     --ink-soft:#5b5850;
-    --gold:#e2a324;      /* pastilak / saffron */
-    --blue:#3d63dd;      /* about / contact */
-    --coral:#e6533c;     /* biomedical entrepreneurship */
+    --gold:#e2a324;
+    --blue:#3d63dd;
+    --coral:#e6533c;
+    --purple:#d9a6f0;
     --panel:#ffffff;
-    --line:#141414;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--paper);
-    background-image:radial-gradient(var(--dot) 1.4px, transparent 1.4px);
-    background-size:26px 26px;
     color:var(--ink);
     font-family:'Space Grotesk',sans-serif;
     overflow-x:hidden;
     min-height:100vh;
   }
   .pixel{font-family:'Press Start 2P',monospace;}
+  button{font-family:inherit;}
+  img{-webkit-user-drag:none; user-select:none;}
 
-  /* ---------- top bar ---------- */
-  .topbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:22px 28px;
+  /* ================= LOADING SCREEN ================= */
+  #loading{
+    position:fixed; inset:0; z-index:200;
+    background:var(--paper);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:28px;
   }
-  .topbar h1{
-    font-size:13px;
-    letter-spacing:0.5px;
-    margin:0;
+  #loading .title{font-size:16px; letter-spacing:3px;}
+  #loading .bar-track{ width:360px; height:26px; border:3px solid var(--ink); background:#fff; padding:3px; }
+  #loading .bar-fill{ height:100%; width:0%; background:#3cb954; transition:width 0.05s linear; }
+  #loading .pct{font-size:13px; color:var(--ink-soft);}
+  #loading .avatar{
+    width:110px;height:110px; border-radius:50%; background:#c9c6bd;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    opacity:0; transform:scale(0.8);
+    transition:opacity 0.4s ease, transform 0.4s ease; position:relative;
   }
-  .topbar .hint{
-    font-size:10px;
-    color:var(--ink-soft);
-    letter-spacing:0.5px;
+  #loading .avatar.show{opacity:1; transform:scale(1);}
+  #loading .avatar svg{width:38px;height:38px; margin-left:4px;}
+  #loading .enter-label{font-size:11px; color:var(--ink-soft); opacity:0; transition:opacity 0.4s ease;}
+  #loading .enter-label.show{opacity:1;}
+  #loading.hide{opacity:0; pointer-events:none; transition:opacity 0.5s ease;}
+
+  /* ================= PAGE WRAP ================= */
+  .page{
+    display:flex; flex-direction:column; align-items:center;
+    padding:26px 16px 40px;
+    min-height:100vh;
   }
 
-  /* ---------- hub / game world ---------- */
+  /* ================= WORLD FRAME (the "window") ================= */
   #world{
     position:relative;
-    width:min(1000px, 94vw);
-    height:560px;
-    margin:10px auto 40px;
-    border:3px solid var(--line);
+    width:min(1500px, 97vw);
+    height:min(860px, 88vh);
+    border:3px solid var(--ink);
     background:var(--panel);
-    background-image:radial-gradient(var(--dot) 1.6px, transparent 1.6px);
-    background-size:24px 24px;
+    box-shadow:12px 12px 0 var(--ink);
     overflow:hidden;
-    box-shadow:8px 8px 0 var(--ink);
-    cursor:crosshair;
   }
-  .name-tag{
-    position:absolute;
-    top:22px; left:50%;
-    transform:translateX(-50%);
-    text-align:center;
-    z-index:2;
-    pointer-events:none;
-  }
-  .name-tag .big{font-size:15px;}
-  .name-tag .small{font-size:8px; color:var(--ink-soft); margin-top:8px; letter-spacing:0.5px;}
 
-  /* player sprite: simple pixel person built from divs */
-  #player{
-    position:absolute;
-    width:28px; height:40px;
-    z-index:5;
-    transition:left 0.05s linear, top 0.05s linear;
-    image-rendering:pixelated;
+  /* nav pill lives INSIDE the frame, top-left, like the reference */
+  .navwrap{position:absolute; top:20px; left:22px; z-index:40;}
+  .navigate-btn{
+    background:var(--purple); border:2.5px solid var(--ink); border-radius:999px;
+    padding:11px 22px; font-size:11px; cursor:pointer; box-shadow:3px 3px 0 var(--ink);
   }
-  #player .head{position:absolute; top:0; left:6px; width:16px; height:12px; background:#f0c39a;}
-  #player .shades{position:absolute; top:4px; left:6px; width:16px; height:4px; background:#141414;}
-  #player .body{position:absolute; top:12px; left:2px; width:24px; height:16px; background:var(--coral);}
-  #player .legs{position:absolute; top:28px; left:4px; width:9px; height:12px; background:#2b2b2b;}
-  #player .legs2{position:absolute; top:28px; left:15px; width:9px; height:12px; background:#2b2b2b;}
-  #player.walk .legs{animation:step 0.4s infinite alternate;}
-  #player.walk .legs2{animation:step 0.4s infinite alternate-reverse;}
-  @keyframes step{to{transform:translateY(-3px);}}
+  .navigate-btn:active{box-shadow:1px 1px 0 var(--ink); transform:translate(2px,2px);}
+  .nav-menu{
+    position:absolute; top:52px; left:0; display:flex; flex-direction:column; gap:9px;
+    opacity:0; pointer-events:none; transform:translateY(-6px);
+    transition:opacity 0.2s ease, transform 0.2s ease;
+  }
+  .nav-menu.open{opacity:1; pointer-events:auto; transform:translateY(0);}
+  .nav-menu button{
+    background:#f7d94c; border:2.5px solid var(--ink); border-radius:999px;
+    padding:10px 20px; font-size:10px; cursor:pointer; white-space:nowrap; text-align:left;
+    box-shadow:2px 2px 0 var(--ink);
+  }
+  .nav-menu button:hover{background:#fff;}
+
+  .hint{
+    position:absolute; top:24px; right:26px; z-index:20;
+    font-size:10px; color:var(--ink-soft); letter-spacing:0.4px; text-align:right; max-width:230px;
+  }
+
+  /* ================= SCREENS (pages inside the frame) ================= */
+  .screen{
+    position:absolute; inset:0;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.35s ease;
+    background:var(--panel);
+    background-image:radial-gradient(var(--dot) 1.8px, transparent 1.8px);
+    background-size:28px 28px;
+  }
+  .screen.active{opacity:1; pointer-events:auto;}
+
+  /* ---- home screen ---- */
+  .world-label{
+    position:absolute; top:26px; left:50%; transform:translateX(-50%);
+    font-size:13px; color:var(--ink-soft); letter-spacing:1.5px; text-align:center; pointer-events:none;
+  }
+  .world-label .name{display:block; font-size:20px; color:var(--ink); margin-bottom:8px;}
+
+  #player{ position:absolute; width:64px; height:150px; z-index:5; transition:left 0.05s linear, top 0.05s linear; }
+  #player img{ width:100%; height:100%; object-fit:contain; object-position:bottom; image-rendering:pixelated; display:block; }
+  #player .frame-back, #player .frame-side, #player .frame-front{ position:absolute; inset:0; display:none; }
+  #player .frame-front{display:block;}
+  #player.face-left .frame-side{transform:scaleX(-1);}
+  #player.dir-side .frame-front, #player.dir-side .frame-back{display:none;}
+  #player.dir-side .frame-side{display:block;}
+  #player.dir-back .frame-front, #player.dir-back .frame-side{display:none;}
+  #player.dir-back .frame-back{display:block;}
+  #player.walk img{animation:bob 0.35s infinite alternate;}
+  @keyframes bob{to{transform:translateY(-4px);}}
 
   .footstep{
-    position:absolute;
-    width:4px;height:4px;
-    background:var(--ink-soft);
-    opacity:0.35;
-    border-radius:50%;
-    z-index:1;
-    pointer-events:none;
+    position:absolute; width:5px;height:5px; background:var(--ink-soft); opacity:0.35;
+    border-radius:50%; z-index:1; pointer-events:none;
   }
 
-  /* folders */
   .folder{
-    position:absolute;
-    width:96px;
-    text-align:center;
-    cursor:pointer;
-    z-index:3;
-    user-select:none;
+    position:absolute; width:150px; text-align:center; cursor:pointer; z-index:3; user-select:none;
   }
-  .folder .icon{
-    width:68px;height:50px;
-    margin:0 auto 8px;
-    position:relative;
-    transition:transform 0.15s ease;
-  }
-  .folder .icon .tab{position:absolute; top:0; left:0; width:34px; height:9px; background:var(--c); border:2.5px solid var(--line); border-bottom:none;}
-  .folder .icon .body{position:absolute; top:9px; left:0; width:68px; height:41px; background:var(--c); border:2.5px solid var(--line);}
-  .folder .label{font-size:9px; letter-spacing:0.5px;}
-  .folder:hover .icon, .folder.near .icon{transform:translateY(-5px) rotate(-2deg);}
-  .folder.f-about{--c:var(--blue); color:var(--blue);}
-  .folder.f-bio{--c:var(--coral); color:var(--coral);}
-  .folder.f-pastilak{--c:var(--gold); color:var(--gold);}
+  .folder .pf-wrap{width:118px; height:98px; margin:0 auto 12px; transition:transform 0.15s ease;}
+  .folder .pf-wrap img{width:100%; height:100%; object-fit:contain; image-rendering:pixelated;}
+  .folder:hover .pf-wrap, .folder.near .pf-wrap{transform:translateY(-6px) rotate(-2deg);}
+  .folder .label{font-size:12px; letter-spacing:0.5px;}
+  .folder.f-about .pf-wrap img{filter:hue-rotate(186deg) saturate(1.25);}
+  .folder.f-bio .pf-wrap img{filter:hue-rotate(-31.5deg) saturate(1.3) brightness(1.02);}
+  .folder.f-pastilak .pf-wrap img{filter:none;}
+  .folder.f-about{color:var(--blue);}
+  .folder.f-bio{color:var(--coral);}
+  .folder.f-pastilak{color:var(--gold);}
 
   .prompt{
-    position:absolute;
-    bottom:16px; left:50%;
-    transform:translateX(-50%);
-    font-size:9px;
-    color:var(--ink-soft);
-    text-align:center;
-    letter-spacing:0.5px;
-    z-index:2;
+    position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+    font-size:11px; color:var(--ink-soft); text-align:center; letter-spacing:0.5px; z-index:2;
   }
 
-  /* ---------- room overlay ---------- */
-  .room{
-    position:fixed;
-    inset:0;
-    background:rgba(20,20,20,0.55);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:50;
-    padding:20px;
+  /* ---- content screens (about / pastilak / socials / bio) ---- */
+  .content-screen{ display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:70px 60px 40px; overflow-y:auto; }
+  .content-inner{ width:100%; max-width:780px; }
+  .back-btn{
+    position:absolute; top:20px; left:180px; z-index:40;
+    background:#fff; border:2.5px solid var(--ink); border-radius:999px;
+    padding:11px 20px; font-size:10px; cursor:pointer; box-shadow:3px 3px 0 var(--ink);
   }
-  .room.open{display:flex;}
-  .room-panel{
-    width:min(720px, 100%);
-    max-height:86vh;
-    overflow-y:auto;
-    background:var(--panel);
-    border:3px solid var(--line);
-    box-shadow:10px 10px 0 var(--ink);
-    padding:34px 36px 40px;
-    position:relative;
-  }
-  .room-panel .tag{
-    display:inline-block;
-    font-size:9px;
-    padding:5px 10px;
-    border:2px solid var(--line);
-    margin-bottom:18px;
-    background:var(--c);
-    color:var(--ink);
-  }
-  .room-panel h2{
-    font-size:20px;
-    margin:0 0 6px;
-    font-family:'Space Grotesk',sans-serif;
-    font-weight:700;
-  }
-  .room-panel .sub{color:var(--ink-soft); font-size:13px; margin-bottom:24px;}
-  .room-panel .close{
-    position:absolute; top:18px; right:18px;
-    width:30px;height:30px;
-    border:2.5px solid var(--line);
-    background:var(--panel);
-    font-size:14px;
-    cursor:pointer;
-    line-height:1;
-  }
-  .room-panel .close:hover{background:var(--ink); color:#fff;}
-  .entry{
-    border-top:2px solid var(--line);
-    padding:18px 0;
-  }
+  .back-btn:hover{background:var(--ink); color:#fff;}
+
+  .tag{ display:inline-block; font-size:10px; padding:6px 12px; border:2px solid var(--ink); margin-bottom:20px; background:var(--c); color:var(--ink); }
+  .content-inner h2{font-size:26px; margin:0 0 8px;}
+  .content-inner .sub{color:var(--ink-soft); font-size:14px; margin-bottom:28px;}
+  .entry{border-top:2px solid var(--ink); padding:20px 0;}
   .entry:last-child{padding-bottom:0;}
-  .entry h3{font-size:14px; margin:0 0 6px;}
-  .entry p{font-size:13px; line-height:1.55; color:#2b2b2b; margin:0 0 8px;}
-  .entry .meta{font-size:10px; color:var(--ink-soft); letter-spacing:0.3px;}
+  .entry h3{font-size:15px; margin:0 0 8px;}
+  .entry p{font-size:14px; line-height:1.6; color:#2b2b2b; margin:0 0 8px;}
+  .entry .meta{font-size:11px; color:var(--ink-soft); letter-spacing:0.3px;}
   .cta{
-    display:inline-block;
-    margin-top:18px;
-    font-size:11px;
-    padding:10px 16px;
-    border:2.5px solid var(--line);
-    background:var(--ink);
-    color:#fff;
-    text-decoration:none;
-    letter-spacing:0.3px;
+    display:inline-block; margin-top:20px; font-size:12px; padding:12px 20px;
+    border:2.5px solid var(--ink); background:var(--ink); color:#fff; text-decoration:none; letter-spacing:0.3px;
   }
   .cta:hover{background:var(--c); color:var(--ink);}
-  .links{display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;}
-  .links a{
-    font-size:11px;
-    padding:9px 14px;
-    border:2px solid var(--line);
-    text-decoration:none;
-    color:var(--ink);
-  }
+  .links{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;}
+  .links a{font-size:12px; padding:10px 16px; border:2px solid var(--ink); text-decoration:none; color:var(--ink);}
   .links a:hover{background:var(--ink); color:#fff;}
 
-  footer{
-    text-align:center;
-    font-size:9px;
-    color:var(--ink-soft);
-    padding:20px 0 40px;
-    letter-spacing:0.4px;
+  .social-row{display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:14px;}
+  .social-row a{
+    width:64px;height:64px; border-radius:50%; border:2.5px solid var(--ink);
+    display:flex; align-items:center; justify-content:center; background:#fff; text-decoration:none;
+    font-size:22px; color:var(--ink);
   }
+  .social-row a:hover{background:var(--ink); color:#fff;}
 
-  @media (max-width:640px){
-    #world{height:520px;}
-    .name-tag .big{font-size:12px;}
-    .folder{width:76px;}
-    .folder .icon{width:54px;height:40px;}
-    .folder .icon .tab{width:26px;}
-    .folder .icon .body{width:54px;height:33px;}
-    .room-panel{padding:26px 20px 30px;}
+  /* ---- biomedical project stack (centered page) ---- */
+  .stack-wrap{ display:flex; flex-direction:column; align-items:center; gap:28px; }
+  .stack{ position:relative; width:100%; max-width:520px; height:320px; margin:0 auto; }
+  .stack-card{
+    position:absolute; left:50%; top:0; width:100%; max-width:480px; min-height:260px;
+    background:#fff; border:2.5px solid var(--ink); box-shadow:7px 7px 0 var(--ink);
+    padding:26px 28px; transform-origin:top center; transition:transform 0.35s ease, opacity 0.35s ease;
+  }
+  .stack-card h3{font-size:17px; margin:0 0 8px;}
+  .stack-card p{font-size:14px; line-height:1.55; color:#2b2b2b; margin:0 0 8px;}
+  .stack-card .meta{font-size:10.5px; color:var(--ink-soft);}
+  .stack-dots{display:flex; gap:9px; justify-content:center;}
+  .stack-dots span{width:10px;height:10px; border-radius:50%; border:2px solid var(--ink); background:#fff; cursor:pointer;}
+  .stack-dots span.active{background:var(--coral);}
+  .stack-nav{display:flex; gap:16px; align-items:center;}
+  .stack-nav button{border:2.5px solid var(--ink); background:#fff; width:38px;height:38px; cursor:pointer; font-size:15px;}
+  .stack-nav button:hover{background:var(--ink); color:#fff;}
+
+  footer{text-align:center; font-size:10px; color:var(--ink-soft); padding:22px 0 10px; letter-spacing:0.4px;}
+
+  @media (max-width:760px){
+    #world{height:min(760px,84vh);}
+    .folder{width:110px;}
+    .folder .pf-wrap{width:84px;height:70px;}
+    #player{width:44px;height:100px;}
+    .back-btn{left:150px; padding:9px 14px;}
+    .content-screen{padding:70px 24px 30px;}
+    .hint{max-width:150px; font-size:9px;}
   }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <h1 class="pixel">SOHEIL</h1>
-  <div class="hint pixel">WASD / ARROWS TO MOVE — OR CLICK A FOLDER</div>
+<!-- ================= LOADING SCREEN ================= -->
+<div id="loading">
+  <div class="title pixel">LOADING</div>
+  <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+  <div class="pct pixel" id="pctLabel">0%</div>
+  <div class="avatar" id="avatarBtn">
+    <svg viewBox="0 0 24 24" fill="#141414"><path d="M8 5v14l11-7z"/></svg>
+  </div>
+  <div class="enter-label pixel" id="enterLabel">click to enter</div>
 </div>
 
-<div id="world">
-  <div class="name-tag">
-    <div class="big pixel">SOHEIL</div>
-    <div class="small">biomedical entrepreneurship hub</div>
-  </div>
+<div class="page">
+  <div id="world">
 
-  <div class="folder f-about" style="left:70px; top:400px;" data-room="about">
-    <div class="icon"><div class="tab"></div><div class="body"></div></div>
-    <div class="label pixel">About /<br>Contact</div>
-  </div>
-
-  <div class="folder f-bio" style="left:420px; top:400px;" data-room="bio">
-    <div class="icon"><div class="tab"></div><div class="body"></div></div>
-    <div class="label pixel">Biomedical<br>Entrepreneurship</div>
-  </div>
-
-  <div class="folder f-pastilak" style="left:770px; top:400px;" data-room="pastilak">
-    <div class="icon"><div class="tab"></div><div class="body"></div></div>
-    <div class="label pixel">Pastilak</div>
-  </div>
-
-  <div id="player" class="head-wrap">
-    <div class="head"></div><div class="shades"></div>
-    <div class="body"></div><div class="legs"></div><div class="legs2"></div>
-  </div>
-
-  <div class="prompt pixel">walk into a folder to open it</div>
-</div>
-
-<footer class="pixel">est. Birmingham, UK — built with too much free time and a biomedical science degree</footer>
-
-<!-- ===================== ROOM: ABOUT / CONTACT ===================== -->
-<div class="room" id="room-about">
-  <div class="room-panel">
-    <button class="close" data-close>✕</button>
-    <span class="tag" style="--c:var(--blue)">FOLDER 01</span>
-    <h2>About / Contact</h2>
-    <div class="sub">Biomedical Science graduate, first-class honours, building the commercial side of science.</div>
-
-    <div class="entry">
-      <p>I studied Biomedical Science with Business &amp; Entrepreneurship at the University of Birmingham, graduating with First Class Honours. I'm looking for business development, commercial, or product-facing roles across pharma, CRO, and biotech — the seam between the science and the deal.</p>
-      <p>Outside of that: I tutor IB and A-Level students across sciences, humanities, and business, and I'm a concert pianist who's monetised performances on the side.</p>
-    </div>
-
-    <div class="entry">
-      <h3>Get in touch</h3>
-      <div class="links">
-        <a href="mailto:your.email@example.com">Email</a>
-        <a href="https://linkedin.com/in/your-handle" target="_blank" rel="noopener">LinkedIn</a>
-        <a href="#" target="_blank" rel="noopener">CV / Resume</a>
+    <div class="navwrap">
+      <button class="navigate-btn pixel" id="navToggle">navigate</button>
+      <div class="nav-menu" id="navMenu">
+        <button data-screen="home">Home</button>
+        <button data-screen="bio">Portfolio</button>
+        <button data-screen="about">About &amp; Contact</button>
+        <button data-screen="socials">Socials</button>
       </div>
-      <p class="meta" style="margin-top:14px;">(placeholder links — swap in your real email, LinkedIn URL and CV file before this goes live)</p>
     </div>
+
+    <button class="back-btn pixel" id="backBtn" style="display:none;">← back</button>
+    <div class="hint pixel" id="hintText">WASD / ARROWS TO MOVE — OR CLICK A FOLDER</div>
+
+    <!-- ============ HOME SCREEN ============ -->
+    <div class="screen active" id="screen-home">
+      <div class="world-label pixel">
+        <span class="name">SOHEIL</span>
+        biomedical entrepreneurship hub
+      </div>
+
+      <div class="folder f-about" style="left:8%; top:66%;" data-screen="about">
+        <div class="pf-wrap"><img src="assets/folder.png" alt=""></div>
+        <div class="label pixel">About &amp;<br>Contact</div>
+      </div>
+
+      <div class="folder f-bio" style="left:41%; top:66%;" data-screen="bio">
+        <div class="pf-wrap"><img src="assets/folder.png" alt=""></div>
+        <div class="label pixel">Biomedical<br>Entrepreneurship</div>
+      </div>
+
+      <div class="folder f-pastilak" style="left:76%; top:66%;" data-screen="pastilak">
+        <div class="pf-wrap"><img src="assets/folder.png" alt=""></div>
+        <div class="label pixel">Pastilak</div>
+      </div>
+
+      <div id="player">
+        <div class="frame-front"><img src="assets/front.png" alt=""></div>
+        <div class="frame-side"><img src="assets/side.png" alt=""></div>
+        <div class="frame-back"><img src="assets/back.png" alt=""></div>
+      </div>
+
+      <div class="prompt pixel">walk into a folder to open it</div>
+    </div>
+
+    <!-- ============ ABOUT & CONTACT ============ -->
+    <div class="screen" id="screen-about">
+      <div class="content-screen"><div class="content-inner">
+        <span class="tag" style="--c:var(--blue)">FOLDER 01</span>
+        <h2>About &amp; Contact</h2>
+        <div class="sub">Biomedical Science graduate, first-class honours, building the commercial side of science.</div>
+        <div class="entry">
+          <p>I studied Biomedical Science with Business &amp; Entrepreneurship at the University of Birmingham, graduating with First Class Honours. I'm looking for business development, commercial, or product-facing roles across pharma, CRO, and biotech — the seam between the science and the deal.</p>
+          <p>Outside of that: I tutor IB and A-Level students across sciences, humanities, and business, and I'm a concert pianist who's monetised performances on the side.</p>
+        </div>
+        <div class="entry">
+          <h3>Get in touch</h3>
+          <div class="links">
+            <a href="mailto:soheil.khaledi05@gmail.com">Email</a>
+            <a href="https://www.linkedin.com/in/soheilkhaledi/" target="_blank" rel="noopener">LinkedIn</a>
+            <a href="#" target="_blank" rel="noopener">CV / Resume</a>
+          </div>
+          <p class="meta" style="margin-top:14px;">(CV link still a placeholder — send the file and I'll wire it up)</p>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ============ BIOMEDICAL ENTREPRENEURSHIP (card stack page) ============ -->
+    <div class="screen" id="screen-bio">
+      <div class="content-screen"><div class="content-inner">
+        <span class="tag" style="--c:var(--coral)">FOLDER 02</span>
+        <h2>Biomedical Entrepreneurship</h2>
+        <div class="sub">Where the science meets the business case. Click the arrows or dots to browse.</div>
+        <div class="stack-wrap">
+          <div class="stack" id="projectStack"></div>
+          <div class="stack-nav">
+            <button id="prevCard">←</button>
+            <div class="stack-dots" id="stackDots"></div>
+            <button id="nextCard">→</button>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ============ PASTILAK ============ -->
+    <div class="screen" id="screen-pastilak">
+      <div class="content-screen"><div class="content-inner">
+        <span class="tag" style="--c:var(--gold)">FOLDER 03</span>
+        <h2>Pastilak</h2>
+        <div class="sub">A functional gummy supplement brand, built from the ground up.</div>
+        <div class="entry">
+          <p>Pastilak is a UK-based functional gummy supplement brand centred on saffron (Safr'Inside® 30mg) and haskap berry (400mg anthocyanins). I built the commercial case end-to-end: customer science, market sizing, competitor modelling, and a full Elevate accelerator application.</p>
+          <p class="meta">Storefront built on Shopify — custom sections, a 3D hero, product pages, FAQ, and a founders page.</p>
+        </div>
+        <a class="cta" style="--c:var(--gold)" href="https://pastilak.com" target="_blank" rel="noopener">Visit pastilak.com →</a>
+      </div></div>
+    </div>
+
+    <!-- ============ SOCIALS ============ -->
+    <div class="screen" id="screen-socials">
+      <div class="content-screen"><div class="content-inner">
+        <span class="tag" style="--c:var(--purple)">SOCIALS</span>
+        <h2>Find me elsewhere</h2>
+        <div class="social-row">
+          <a href="#" target="_blank" rel="noopener" title="Instagram">IG</a>
+          <a href="#" target="_blank" rel="noopener" title="LinkedIn">in</a>
+          <a href="#" target="_blank" rel="noopener" title="Spotify">SP</a>
+          <a href="#" target="_blank" rel="noopener" title="TikTok">TT</a>
+          <a href="#" target="_blank" rel="noopener" title="GitHub">GH</a>
+        </div>
+        <p class="meta" style="margin-top:20px; text-align:center;">(placeholder links — send real handles/URLs and I'll swap them in)</p>
+      </div></div>
+    </div>
+
   </div>
-</div>
 
-<!-- ===================== ROOM: BIOMEDICAL ENTREPRENEURSHIP ===================== -->
-<div class="room" id="room-bio">
-  <div class="room-panel">
-    <button class="close" data-close>✕</button>
-    <span class="tag" style="--c:var(--coral)">FOLDER 02</span>
-    <h2>Biomedical Entrepreneurship</h2>
-    <div class="sub">Where the science meets the business case.</div>
-
-    <div class="entry">
-      <h3>Dissertation — Enhanced-Bx / Claritex</h3>
-      <p>A commercialisation business case for a microfluidic ex vivo tumour profiling platform for oesophagogastric adenocarcinoma clinical trials, supervised by Dr Gianmarco Contino and Dr Nikos Batis. Built out competitor SWOTs, TAM/SAM/SOM sizing, a marketing plan, and regulatory pathway mapping.</p>
-      <p class="meta">Top-cohort mark · 84 (79 after late penalty)</p>
-    </div>
-
-    <div class="entry">
-      <h3>Celentyx Biomedical Entrepreneurship Award</h3>
-      <p>Won for applying commercial thinking to a biomedical science problem — bridging lab-side science with market-side reasoning.</p>
-    </div>
-
-    <div class="entry">
-      <h3>Arthur Thomson Trust Excellence Prize</h3>
-      <p>Awarded for academic excellence during the degree.</p>
-    </div>
-
-    <div class="entry">
-      <h3>What I'm building toward</h3>
-      <p>Roles where I can sit between R&amp;D and the market — business development, commercial strategy, or product roles at pharma, CRO, or biotech companies, translating scientific work into something investable and marketable.</p>
-    </div>
-  </div>
-</div>
-
-<!-- ===================== ROOM: PASTILAK ===================== -->
-<div class="room" id="room-pastilak">
-  <div class="room-panel">
-    <button class="close" data-close>✕</button>
-    <span class="tag" style="--c:var(--gold)">FOLDER 03</span>
-    <h2>Pastilak</h2>
-    <div class="sub">A functional gummy supplement brand, built from the ground up.</div>
-
-    <div class="entry">
-      <p>Pastilak is a UK-based functional gummy supplement brand centred on saffron (Safr'Inside® 30mg) and haskap berry (400mg anthocyanins). I built the commercial case end-to-end: customer science, market sizing, competitor modelling, and a full Elevate accelerator application.</p>
-      <p class="meta">Storefront built on Shopify — custom sections, a 3D hero, product pages, FAQ, and a founders page.</p>
-    </div>
-
-    <a class="cta" style="--c:var(--gold)" href="https://pastilak.com" target="_blank" rel="noopener">Visit pastilak.com →</a>
-  </div>
+  <footer class="pixel">est. Birmingham, UK — built with too much free time and a biomedical science degree</footer>
 </div>
 
 <script>
+  /* ============ PROJECT DATA — EDIT THIS ============ */
+  const PROJECTS = [
+    {
+      tag: "Dissertation",
+      title: "Enhanced-Bx / Claritex",
+      body: "A commercialisation business case for a microfluidic ex vivo tumour profiling platform for oesophagogastric adenocarcinoma clinical trials, supervised by Dr Gianmarco Contino and Dr Nikos Batis. Built out competitor SWOTs, TAM/SAM/SOM sizing, a marketing plan, and regulatory pathway mapping.",
+      meta: "Top-cohort mark · 84 (79 after late penalty)"
+    },
+    { tag: "Project 2", title: "TODO — add project name", body: "TODO — describe this project so I can fill it in.", meta: "" },
+    { tag: "Project 3", title: "TODO — add project name", body: "TODO — describe this project so I can fill it in.", meta: "" },
+    { tag: "ICAs & Coursework", title: "TODO — list your other ICAs", body: "TODO — send me the list and detail for each.", meta: "" }
+  ];
+
+  const stackEl = document.getElementById('projectStack');
+  const dotsEl = document.getElementById('stackDots');
+  let cardIndex = 0;
+
+  function renderStack(){
+    stackEl.innerHTML = ''; dotsEl.innerHTML = '';
+    PROJECTS.forEach((p, i)=>{
+      const offset = i - cardIndex;
+      const card = document.createElement('div');
+      card.className = 'stack-card';
+      card.innerHTML = `<div class="tag" style="--c:var(--coral)">${p.tag}</div>
+        <h3>${p.title}</h3><p>${p.body}</p>
+        ${p.meta ? `<div class="meta">${p.meta}</div>` : ''}`;
+      let z = 10 - Math.abs(offset), translate, rotate, opacity;
+      if(offset === 0){ translate='0px, 0px'; rotate='0deg'; opacity=1; }
+      else if(offset > 0){ translate=`${offset*16}px, ${offset*12}px`; rotate=`${offset*2}deg`; opacity=Math.max(0.15,1-offset*0.35); }
+      else { card.style.display='none'; }
+      card.style.zIndex = z;
+      card.style.transform = `translateX(-50%) translate(${translate}) rotate(${rotate})`;
+      card.style.opacity = opacity;
+      stackEl.appendChild(card);
+      const dot = document.createElement('span');
+      if(i === cardIndex) dot.classList.add('active');
+      dot.addEventListener('click', ()=>{ cardIndex=i; renderStack(); });
+      dotsEl.appendChild(dot);
+    });
+  }
+  renderStack();
+  document.getElementById('prevCard').addEventListener('click', ()=>{ cardIndex=(cardIndex-1+PROJECTS.length)%PROJECTS.length; renderStack(); });
+  document.getElementById('nextCard').addEventListener('click', ()=>{ cardIndex=(cardIndex+1)%PROJECTS.length; renderStack(); });
+
+  /* ============ LOADING SCREEN ============ */
+  const barFill = document.getElementById('barFill');
+  const pctLabel = document.getElementById('pctLabel');
+  const avatarBtn = document.getElementById('avatarBtn');
+  const enterLabel = document.getElementById('enterLabel');
+  const loadingScreen = document.getElementById('loading');
+  let pct = 0;
+  const loadInterval = setInterval(()=>{
+    pct += Math.floor(Math.random()*9)+4;
+    if(pct >= 100){ pct=100; clearInterval(loadInterval); avatarBtn.classList.add('show'); enterLabel.classList.add('show'); }
+    barFill.style.width = pct+'%'; pctLabel.textContent = pct+'%';
+  }, 120);
+  avatarBtn.addEventListener('click', ()=>{
+    loadingScreen.classList.add('hide');
+    setTimeout(()=> loadingScreen.style.display='none', 550);
+  });
+
+  /* ============ SCREEN ROUTER (real "pages", no modal backdrop) ============ */
+  const screens = document.querySelectorAll('.screen');
+  const backBtn = document.getElementById('backBtn');
+  const hintText = document.getElementById('hintText');
+  let currentScreen = 'home';
+
+  function showScreen(id){
+    screens.forEach(s => s.classList.toggle('active', s.id === 'screen-'+id));
+    currentScreen = id;
+    backBtn.style.display = id === 'home' ? 'none' : 'block';
+    hintText.style.display = id === 'home' ? 'block' : 'none';
+  }
+  backBtn.addEventListener('click', ()=> showScreen('home'));
+
+  /* ============ NAV MENU ============ */
+  const navToggle = document.getElementById('navToggle');
+  const navMenu = document.getElementById('navMenu');
+  navToggle.addEventListener('click', ()=> navMenu.classList.toggle('open'));
+  navMenu.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ navMenu.classList.remove('open'); showScreen(btn.dataset.screen); });
+  });
+  document.querySelectorAll('.folder').forEach(f=>{
+    f.addEventListener('click', ()=> showScreen(f.dataset.screen));
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape' && currentScreen !== 'home') showScreen('home');
+  });
+
+  /* ============ WORLD / PLAYER MOVEMENT (home screen only) ============ */
   const world = document.getElementById('world');
+  const homeScreen = document.getElementById('screen-home');
   const player = document.getElementById('player');
   const folders = document.querySelectorAll('.folder');
 
   let worldW, worldH;
-  let x = 460, y = 200; // player position (top-left of sprite)
-  const speed = 3.2;
+  let x = 640, y = 260;
+  const speed = 3.6;
   const keys = {};
   let lastStepTime = 0;
 
-  function resize(){
-    worldW = world.clientWidth;
-    worldH = world.clientHeight;
-  }
+  function resize(){ worldW = world.clientWidth; worldH = world.clientHeight; }
   window.addEventListener('resize', resize);
   resize();
 
   function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-
-  function placePlayer(){
-    player.style.left = x + 'px';
-    player.style.top = y + 'px';
-  }
+  function placePlayer(){ player.style.left = x + 'px'; player.style.top = y + 'px'; }
   placePlayer();
+
+  function updateFacing(dx, dy){
+    player.classList.remove('dir-back');
+    if(Math.abs(dx) >= Math.abs(dy)){
+      player.classList.remove('dir-back');
+      player.classList.toggle('face-left', dx < 0);
+      player.classList.add('dir-side');
+    } else if(dy < 0){
+      player.classList.remove('dir-side');
+      player.classList.add('dir-back');
+    } else {
+      player.classList.remove('dir-side'); player.classList.remove('dir-back');
+    }
+  }
 
   function nearestFolder(){
     let found = null;
     folders.forEach(f=>{
-      const fx = parseInt(f.style.left);
-      const fy = parseInt(f.style.top);
-      const dx = (x+14) - (fx+34);
-      const dy = (y+20) - (fy+25);
+      const rect = f.getBoundingClientRect(), wr = world.getBoundingClientRect();
+      const fx = rect.left - wr.left, fy = rect.top - wr.top;
+      const dx = (x+32) - (fx+59), dy = (y+90) - (fy+49);
       const dist = Math.sqrt(dx*dx + dy*dy);
-      f.classList.toggle('near', dist < 60);
-      if(dist < 46) found = f;
+      f.classList.toggle('near', dist < 90);
+      if(dist < 70) found = f;
     });
     return found;
   }
@@ -386,89 +491,52 @@
   function dropFootstep(){
     const dot = document.createElement('div');
     dot.className = 'footstep';
-    dot.style.left = (x+12) + 'px';
-    dot.style.top = (y+38) + 'px';
-    world.appendChild(dot);
+    dot.style.left = (x+30) + 'px'; dot.style.top = (y+140) + 'px';
+    homeScreen.appendChild(dot);
     setTimeout(()=>dot.remove(), 1400);
   }
 
-  window.addEventListener('keydown', e=>{
-    keys[e.key.toLowerCase()] = true;
-  });
-  window.addEventListener('keyup', e=>{
-    keys[e.key.toLowerCase()] = false;
-  });
+  window.addEventListener('keydown', e=> keys[e.key.toLowerCase()] = true);
+  window.addEventListener('keyup', e=> keys[e.key.toLowerCase()] = false);
 
-  let target = null; // click-to-walk target
-
-  world.addEventListener('click', e=>{
-    if(e.target.closest('.folder')) return;
+  let target = null;
+  homeScreen.addEventListener('click', e=>{
+    if(currentScreen !== 'home' || e.target.closest('.folder')) return;
     const rect = world.getBoundingClientRect();
-    target = { x: clamp(e.clientX - rect.left - 14, 0, worldW-28), y: clamp(e.clientY - rect.top - 20, 0, worldH-40) };
-  });
-
-  folders.forEach(f=>{
-    f.addEventListener('click', ()=> openRoom(f.dataset.room));
-  });
-
-  function openRoom(id){
-    document.getElementById('room-'+id).classList.add('open');
-  }
-  document.querySelectorAll('[data-close]').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      e.target.closest('.room').classList.remove('open');
-    });
-  });
-  document.querySelectorAll('.room').forEach(r=>{
-    r.addEventListener('click', e=>{ if(e.target === r) r.classList.remove('open'); });
-  });
-  document.addEventListener('keydown', e=>{
-    if(e.key === 'Escape'){
-      document.querySelectorAll('.room.open').forEach(r=>r.classList.remove('open'));
-    }
+    target = { x: clamp(e.clientX - rect.left - 32, 0, worldW-64), y: clamp(e.clientY - rect.top - 75, 0, worldH-150) };
   });
 
   function tick(ts){
-    let dx = 0, dy = 0;
-    if(keys['arrowup']||keys['w']) dy -= 1;
-    if(keys['arrowdown']||keys['s']) dy += 1;
-    if(keys['arrowleft']||keys['a']) dx -= 1;
-    if(keys['arrowright']||keys['d']) dx += 1;
+    if(currentScreen === 'home'){
+      let dx = 0, dy = 0;
+      if(keys['arrowup']||keys['w']) dy -= 1;
+      if(keys['arrowdown']||keys['s']) dy += 1;
+      if(keys['arrowleft']||keys['a']) dx -= 1;
+      if(keys['arrowright']||keys['d']) dx += 1;
 
-    let moving = false;
-
-    if(dx!==0 || dy!==0){
-      const len = Math.sqrt(dx*dx+dy*dy);
-      x = clamp(x + (dx/len)*speed, 0, worldW-28);
-      y = clamp(y + (dy/len)*speed, 0, worldH-40);
-      target = null;
-      moving = true;
-    } else if(target){
-      const tdx = target.x - x, tdy = target.y - y;
-      const dist = Math.sqrt(tdx*tdx+tdy*tdy);
-      if(dist > speed){
-        x += (tdx/dist)*speed;
-        y += (tdy/dist)*speed;
-        moving = true;
-      } else {
-        x = target.x; y = target.y;
-        target = null;
+      let moving = false;
+      if(dx!==0 || dy!==0){
+        const len = Math.sqrt(dx*dx+dy*dy);
+        x = clamp(x + (dx/len)*speed, 0, worldW-64);
+        y = clamp(y + (dy/len)*speed, 0, worldH-150);
+        updateFacing(dx, dy);
+        target = null; moving = true;
+      } else if(target){
+        const tdx = target.x - x, tdy = target.y - y;
+        const dist = Math.sqrt(tdx*tdx+tdy*tdy);
+        if(dist > speed){
+          x += (tdx/dist)*speed; y += (tdy/dist)*speed;
+          updateFacing(tdx, tdy);
+          moving = true;
+        } else { x = target.x; y = target.y; target = null; }
       }
-    }
 
-    player.classList.toggle('walk', moving);
-    if(moving && ts - lastStepTime > 140){
-      dropFootstep();
-      lastStepTime = ts;
+      player.classList.toggle('walk', moving);
+      if(moving && ts - lastStepTime > 140){ dropFootstep(); lastStepTime = ts; }
+      placePlayer();
+      const near = nearestFolder();
+      if(near && moving) showScreen(near.dataset.screen);
     }
-
-    placePlayer();
-    const near = nearestFolder();
-    if(near && moving && !ts.__opened){
-      // auto-open when walking into a folder
-      openRoom(near.dataset.room);
-    }
-
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
