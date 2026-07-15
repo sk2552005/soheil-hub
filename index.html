@@ -117,7 +117,7 @@
   .world-label .name{display:block; font-size:20px; color:var(--ink); margin-bottom:8px;}
 
   #player{ position:absolute; width:64px; height:150px; z-index:5; transition:left 0.05s linear, top 0.05s linear; }
-  #player img{ width:100%; height:100%; object-fit:contain; object-position:bottom; image-rendering:pixelated; display:block; }
+  #player img{ position:absolute; left:50%; bottom:0; height:100%; width:auto; max-width:none; transform:translateX(-50%); object-fit:contain; image-rendering:pixelated; display:block; }
   #player .frame-back, #player .frame-side, #player .frame-side2, #player .frame-front{ position:absolute; inset:0; display:none; }
   #player .frame-front{display:block;}
   #player.face-left .frame-side, #player.face-left .frame-side2{transform:scaleX(-1);}
@@ -439,7 +439,7 @@
     spinTimer = setInterval(()=>{
       spinIdx = (spinIdx+1) % SPIN_ORDER.length;
       spinFrames.forEach(img=> img.classList.toggle('show', img.dataset.frame === SPIN_ORDER[spinIdx]));
-    }, 160);
+    }, 260); // was 160 — slower turn so it reads as a spin, not a flicker
   }
   function stopSpin(){ clearInterval(spinTimer); }
 
@@ -449,9 +449,12 @@
     let pct = 0;
     barFill.style.width = '0%'; pctLabel.textContent = '0%';
     startSpin();
+    const MIN_DURATION = 1400; // ms — guarantees ~5 full spin cycles before it can close
+    const startedAt = performance.now();
     const interval = setInterval(()=>{
-      pct += Math.floor(Math.random()*14)+10;
-      if(pct >= 100){
+      pct += Math.floor(Math.random()*10)+6;
+      const elapsed = performance.now() - startedAt;
+      if(pct >= 100 && elapsed >= MIN_DURATION){
         pct = 100;
         clearInterval(interval);
         stopSpin();
@@ -459,9 +462,11 @@
           loadingScreen.classList.add('hide');
           setTimeout(()=>{ loadingScreen.style.display='none'; if(onDone) onDone(); }, 350);
         }, 150);
+      } else if(pct >= 100){
+        pct = 99; // hold just under 100 until the minimum spin time has played out
       }
       barFill.style.width = pct+'%'; pctLabel.textContent = pct+'%';
-    }, 60);
+    }, 70);
   }
   runLoading();
 
@@ -488,6 +493,12 @@
       navMenu.classList.remove('open');
       if(btn.dataset.screen === 'home' && currentScreen !== 'home'){
         showScreen('home');
+        // reset the character to a default spawn + idle facing so returning home
+        // always feels like a real "return", not wherever it was last left
+        x = worldW/2 - 32;
+        y = worldH*0.5;
+        player.classList.remove('dir-side','dir-back','face-left','walk','step2');
+        placePlayer();
         runLoading();
       } else {
         showScreen(btn.dataset.screen);
@@ -519,7 +530,7 @@
 
   function resize(){
     worldW = world.clientWidth; worldH = world.clientHeight;
-    y = clamp(y, worldH*0.30, worldH*0.78 - 41);
+    y = clamp(y, worldH*0.14, worldH*0.78 - 41);
     x = clamp(x, 0, worldW-64);
     placePlayer();
   }
@@ -562,7 +573,7 @@
     const rect = world.getBoundingClientRect();
     target = {
       x: clamp(e.clientX - rect.left - 32, 0, worldW-64),
-      y: clamp(e.clientY - rect.top - 75, worldH*0.30, worldH*0.78 - 41)
+      y: clamp(e.clientY - rect.top - 75, worldH*0.14, worldH*0.78 - 41)
     };
   });
 
@@ -577,7 +588,7 @@
       let moving = false;
       if(dx!==0 || dy!==0){
         x = clamp(x + dx*speed, 0, worldW-64);
-        y = clamp(y + dy*speed, worldH*0.30, worldH*0.78 - 41);
+        y = clamp(y + dy*speed, worldH*0.14, worldH*0.78 - 41);
         setDirection(dx, dy);
         target = null; moving = true;
       } else if(target){
